@@ -1,5 +1,5 @@
 {
-  "name": "figma-plugin-react",
+  "name": "inspect-colors-figma-plugin",
   "version": "1.0.0",
   "description": "Inspect Colors Figma plugin built with Typescript, React and TailwindCSS.",
   "license": "MIT",
