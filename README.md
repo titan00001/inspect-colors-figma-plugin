@@ -37,6 +37,10 @@ This Figma plugin is open-source and distributed under the MIT License.
 
 Explore and inspect colors effortlessly with the Inspect Color Figma plugin!
 
+## Credits
+
+This project template has been borrowed from [bricks-cloud/figma-plugin-tailwindcss-template](https://github.com/bricks-cloud/figma-plugin-tailwindcss-template). Special thanks to the original contributors for providing a solid foundation.
+
 
 #### **Technologies Used**:
 1. Typescript
