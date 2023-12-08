@@ -42,7 +42,7 @@
     "webpack-cli": "^5.0.0"
   },
   "figmaPlugin": {
-    "name": "Inspect Colors React",
+    "name": "Inspect Colors",
     "api": "1.0.0",
     "ui": "ui.html",
     "main": "code.js",
