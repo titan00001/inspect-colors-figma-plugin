@@ -1,7 +1,7 @@
 {
-  "name": "inspect-colors-figma-plugin",
+  "name": "inspect-style-figma-plugin",
   "version": "1.0.0",
-  "description": "Inspect Colors Figma plugin built with Typescript, React and TailwindCSS.",
+  "description": "Inspect Style Figma plugin built with Typescript, React and TailwindCSS.",
   "license": "MIT",
   "scripts": {
     "build": "webpack --mode=production --define-process-env-node-env=production",
@@ -42,7 +42,7 @@
     "webpack-cli": "^5.0.0"
   },
   "figmaPlugin": {
-    "name": "Inspect Colors",
+    "name": "Inspect Style",
     "api": "1.0.0",
     "ui": "ui.html",
     "main": "code.js",
