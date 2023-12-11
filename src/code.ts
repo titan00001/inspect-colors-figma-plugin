@@ -1,33 +1,128 @@
 import { Color, ColorContent, TColorExtractor, RGBAColor } from "./@types";
-import { countBy, sortBy, uniqBy } from "./utils/utils";
+import { countBy, measurePerformanceInMs, sortBy, uniqBy } from "./utils/utils";
 
 figma.showUI(__html__);
 
+figma.skipInvisibleInstanceChildren = true;
+let pageData = {};
 
-figma.on("selectionchange", () => {
-  figma.ui.postMessage({
-    type: "selection-change",
-    isComponentSelected: figma.currentPage.selection.length > 0,
-    selectedComponents: figma.currentPage.selection.map((x) => x.name),
-  });
-  console.log({ selection: figma.currentPage.selection });
+figma.ui.onmessage = (msg) => {
+  console.log("message in plugin", msg);
+  let fetchedTimeInMilliseconds = -1000;
 
-  const currentPageNodes = figma.currentPage.findAll();
+  if (msg.type === "get-page-data") {
+    const { pageId, refreshCache = false } = msg.payload;
 
+    fetchedTimeInMilliseconds = measurePerformanceInMs(() => {
+      // Check if page data is already available for the requested page
+      if (!pageData[pageId] && !refreshCache) {
+        const children = figma.root.children.find(
+          (child) => child.id === pageId
+        );
 
-  const solidColorExtractor = getSolidPaintColor;
-  const fillPaints = getFillPaintNodes(currentPageNodes, solidColorExtractor);
-  const strokePaints = getStrokePaintNodes(currentPageNodes, solidColorExtractor);
+        const descendantNodes = children?.findAll();
 
-  const linearGradients = getFillPaintNodes(currentPageNodes, getLinearPaintColor)
+        const fillPaints = getFillPaintNodes(
+          descendantNodes,
+          getSolidPaintColor
+        );
+        const strokePaints = getStrokePaintNodes(
+          descendantNodes,
+          getSolidPaintColor
+        );
+        const linearGradients = getFillPaintNodes(
+          descendantNodes,
+          getLinearPaintColor
+        );
+        const fonts = getFontInfoForTextNodes(descendantNodes);
 
-  figma.ui.postMessage({
-    type: "solid-paints",
-    fillPaints,
-    strokePaints,
-    linearGradients,
-  });
+        // Save the processed data for future reference
+        pageData[pageId] = {
+          fillPaints,
+          strokePaints,
+          linearGradients,
+          fonts,
+        };
+      }
+    });
+
+    // Send the page data to the UI
+    figma.ui.postMessage({
+      type: "page-styles",
+      pageId,
+      data: {
+        ...pageData[pageId],
+        fetchedTimeInSeconds: fetchedTimeInMilliseconds / 1000,
+      },
+    });
+  }
+};
+
+figma.on("currentpagechange", () => {
+  getCurrentPageStyles();
 });
+
+// When plugin loads, share the current page information
+figma.on("run", () => {
+  const childPages = figma.root.children.map((node) => ({
+    id: node.id,
+    name: node.name,
+  }));
+
+  figma.ui.postMessage({
+    type: "all-pages-data",
+    data: childPages,
+  });
+
+  getCurrentPageStyles();
+});
+
+const getCurrentPageStyles = () => {
+  const currentPage = figma.currentPage;
+  const currentPageNodes = currentPage.findAll();
+
+  let fetchedTimeInMilliseconds = -1000;
+
+  if (!currentPage.id) return;
+
+  if (!pageData[currentPage.id]) {
+    // Extract and process paints and fonts for the current page
+
+    fetchedTimeInMilliseconds = measurePerformanceInMs(() => {
+      const fillPaints = getFillPaintNodes(
+        currentPageNodes,
+        getSolidPaintColor
+      );
+      const strokePaints = getStrokePaintNodes(
+        currentPageNodes,
+        getSolidPaintColor
+      );
+      const linearGradients = getFillPaintNodes(
+        currentPageNodes,
+        getLinearPaintColor
+      );
+      const fonts = getFontInfoForTextNodes(currentPageNodes);
+
+      // Save the processed data for the current page
+      pageData[currentPage.id] = {
+        fillPaints,
+        strokePaints,
+        linearGradients,
+        fonts,
+      };
+    });
+  }
+
+  // Send the page data to the UI
+  figma.ui.postMessage({
+    type: "current-page-style",
+    pageId: currentPage.id,
+    data: {
+      ...pageData[currentPage.id],
+      fetchedTimeInSeconds: fetchedTimeInMilliseconds / 1000,
+    },
+  });
+};
 
 const getFillPaintNodes = (
   nodes: SceneNode[],
@@ -63,7 +158,7 @@ const getFillPaintNodes = (
     color: n?.color,
     usedBy: n.usedBy,
   })) as ColorContent[];
-  console.log({ filteredNode, uniqueNodes, slicedNodes, solidPaints });
+  // console.log({ filteredNode, uniqueNodes, slicedNodes, solidPaints });
 
   return sortBy(solidPaints, (item) => item.name);
 };
@@ -102,12 +197,12 @@ const getStrokePaintNodes = (
     color: n?.color,
     usedBy: n.usedBy,
   })) as ColorContent[];
-  console.log("stroke: ", {
-    filteredNode,
-    uniqueNodes,
-    slicedNodes,
-    solidPaints,
-  });
+  // console.log("stroke: ", {
+  //   filteredNode,
+  //   uniqueNodes,
+  //   slicedNodes,
+  //   solidPaints,
+  // });
 
   return sortBy(solidPaints, (item) => item.name);
 };
@@ -159,7 +254,7 @@ const getLinearPaintColor = (style: BaseStyle | null): Color | undefined => {
         type: "GRADIENT",
         color: cssGradient,
       };
-      return result
+      return result;
     }
   }
 
@@ -212,4 +307,41 @@ function getGradientDirection(transform: number[][]): string {
 
   // Convert angle to degrees and format for CSS
   return `${Math.round((angle * 180) / Math.PI)}deg`;
+}
+
+function getFontInfoForTextNodes(nodes: (SceneNode | PageNode)[]) {
+  const textNodes = nodes.filter((node) => node.type === "TEXT") as TextNode[];
+  const uniqueNodes = uniqBy(textNodes, (item) => item.textStyleId);
+  const countNodesById = countBy(textNodes, (item) =>
+    item.textStyleId.toString()
+  );
+
+  const textStyles = uniqueNodes
+    .map((tnode) => ({
+      style: figma.getStyleById(tnode.textStyleId.toString()),
+      node: tnode,
+    }))
+    .filter((style) => style.style?.id) as {
+    style: TextStyle;
+    node: TextNode;
+  }[];
+
+  const parsedTextStyles = textStyles.map(({ style, node }) => {
+    return {
+      id: style.id.toString(),
+      name: style.name,
+      font: {
+        fontFamily: style.fontName,
+        fontSize: style.fontSize,
+        fontWeight: node.fontWeight.toString(),
+        lineHeight: style.lineHeight,
+        fontStyle: style.fontName.style?.toLowerCase() ?? "normal",
+      },
+      usedBy: countNodesById[style.id.toString()],
+    };
+  });
+
+  console.log({ textNodes, textStyles, parsedTextStyles });
+
+  return sortBy(parsedTextStyles, (item) => item.name);
 }

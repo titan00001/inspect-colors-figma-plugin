@@ -11,6 +11,7 @@
     "watch": "webpack --watch"
   },
   "dependencies": {
+    "@headlessui/react": "^1.7.17",
     "create-file-webpack": "^1.0.2",
     "html-loader": "^4.2.0",
     "html-webpack-inline-source-plugin": "^0.0.10",
@@ -44,6 +45,7 @@
   "figmaPlugin": {
     "name": "Inspect Style",
     "api": "1.0.0",
+    "id": "1314863667125003624",
     "ui": "ui.html",
     "main": "code.js",
     "capabilities": [

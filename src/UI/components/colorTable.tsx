@@ -1,5 +1,5 @@
 import React from "react";
-import { ColorContent } from "../@types";
+import { ColorContent } from "../../@types";
 
 export interface IColorTableProps {
   colors: ColorContent[];

@@ -16,6 +16,15 @@ export const withTimeout = (onSuccess, onTimeout, timeout) => {
 };
 
 
+export const measurePerformanceInMs = (callback: () => void): number => {
+  const startTime = Date.now();
+  callback();
+  const endTime = Date.now();
+
+  return endTime - startTime;
+}
+
+
 interface KeyExtractor<T> {
   (item: T): any;
 }

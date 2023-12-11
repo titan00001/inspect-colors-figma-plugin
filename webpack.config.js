@@ -74,7 +74,7 @@ module.exports = (env, argv) => ({
     new CreateFileWebpack({
       path: path.resolve(__dirname, "dist"),
       fileName: "manifest.json",
-      content: JSON.stringify(figmaPlugin),
+      content: JSON.stringify(figmaPlugin)
     }),
   ],
 });
