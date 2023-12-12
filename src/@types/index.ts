@@ -64,4 +64,7 @@ export type PageInfo = {
 
 export type PageStyle = Record<string, StylePayload>
 export type PageFetchActions = "FETCH" | "REFETCH";
+export type PageClickActions = "ADD" | "REMOVE";
+
+export type TSelection = "CURRENT_PAGE" | "COMBINED_PAGE"
 

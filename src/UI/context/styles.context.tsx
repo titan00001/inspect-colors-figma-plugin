@@ -3,10 +3,11 @@ import {
   FC,
   PropsWithChildren,
   createContext,
-  useEffect,
+  useMemo,
   useState,
 } from "react";
-import { PageFetchActions, PageInfo, PageStyle, StylePayload } from "../../@types";
+import { PageClickActions, PageFetchActions, PageInfo, PageStyle, StylePayload, TSelection } from "../../@types";
+import { combineAndAddUsedBy } from "../../utils/utils";
 
 export interface StylesContextProps {
   pagesInfoData: PageInfo[];
@@ -18,7 +19,12 @@ export interface StylesContextProps {
   setCurrentPageStyles: (pageStyle: StylePayload, id: string) => void;
   postMessageToPlugin: (type: string, payload: Record<string, unknown>) => void;
   fetchPageAction: (pageId: PageInfo["id"], action: PageFetchActions) => void;
-}
+  selectedPagesStyles: StylePayload;
+  selectedPageIds: PageInfo["id"][];
+  setSelectedPages: (pageInfo: PageInfo, action: PageClickActions) => void;
+  selectedMenu: TSelection;
+  setSelection: (select: TSelection) => void;
+ }
 
 export const StylesContext = createContext<StylesContextProps>({
   pagesInfoData: [] as PageInfo[],
@@ -29,7 +35,12 @@ export const StylesContext = createContext<StylesContextProps>({
   currentPageStyles: {} as StylePayload,
   setCurrentPageStyles: (pageStyle: StylePayload, id: string) => { },
   postMessageToPlugin: (type: string, payload: Record<string, unknown>) => { },
-  fetchPageAction: (pageId: string, action: PageFetchActions) => { }
+  fetchPageAction: (pageId: string, action: PageFetchActions) => { },
+  selectedPagesStyles: {} as StylePayload,
+  selectedPageIds: [] as PageInfo["id"][],
+  setSelectedPages: (pageInfo: PageInfo, action: PageClickActions) => {},
+  selectedMenu: "CURRENT_PAGE" as TSelection,
+  setSelection: (select: TSelection) => {},
 });
 
 export const StylesContextProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -37,6 +48,8 @@ export const StylesContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const [pagesInfoData, setPagesInfoData] = useState<PageInfo[]>([]);
   const [pageStyles, _setPageStyles] = useState<PageStyle>();
   const [currentPageStyles, _setCurrentPageStyles] = useState<StylePayload>();
+  const [selectedPageIds, _setSelectedPageIds] = useState<PageInfo["id"][]>([]);
+  const [selectedMenu, setSelectedMenu] = useState<TSelection>("CURRENT_PAGE");
 
   const setPageStyles = (pageStyle: StylePayload, id: string) => {
     setPageInfoData(id, { loading: false, isFetched: true, fetchedTimeInSeconds: pageStyle.fetchedTimeInSeconds });
@@ -64,21 +77,47 @@ export const StylesContextProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const setPageInfoData = (id: PageInfo["id"], updateInfo: Partial<PageInfo>): PageInfo[] | undefined => {
     const pageInfoIndex = pagesInfoData.findIndex((item) => item.id === id);
-    console.log("Sting page info", id, updateInfo, pageInfoIndex, pagesInfoData)
     if (pageInfoIndex > -1) {
       pagesInfoData[pageInfoIndex] = { ...pagesInfoData[pageInfoIndex], ...updateInfo };
       setPagesInfoData([...pagesInfoData]);
-      console.log("Set page info", pagesInfoData[pageInfoIndex])
       return pagesInfoData
     }
     return;
   };
 
+  const setSelectedPages = (pageInfo: PageInfo, action: PageClickActions) => {
+    if(action === "ADD" && !selectedPageIds.includes(pageInfo.id) && pageInfo.isFetched) {
+      const updatedSelectedPageIds = [...selectedPageIds, pageInfo.id]
+      _setSelectedPageIds(updatedSelectedPageIds);
+      return updatedSelectedPageIds;
+    }
+    else if(action === "REMOVE" && selectedPageIds.includes(pageInfo.id) && pageInfo.isFetched) {
+      const updatedSelectedPageIds = selectedPageIds.filter(ids => ids !== pageInfo.id);
+      _setSelectedPageIds(updatedSelectedPageIds);
+      return updatedSelectedPageIds;
+    }
+  }
 
+  const selectedPagesStyles = useMemo(() => {
+     const selectedPageStyles = selectedPageIds.map(pageId => pageStyles[pageId]);
+    //  concat
+     const combinedStyle: StylePayload = {
+      fillPaints: selectedPageStyles.reduce((prevFillPaints, currStyle) => [...prevFillPaints, ...currStyle.fillPaints], [] as StylePayload["fillPaints"]),
+      strokePaints: selectedPageStyles.reduce((prevStrokePaints, currStyle) => [...prevStrokePaints, ...currStyle.strokePaints], [] as StylePayload["strokePaints"]),
+      linearGradients: selectedPageStyles.reduce((prevLinearGradients, currStyle) => [...prevLinearGradients, ...currStyle.linearGradients], [] as StylePayload["linearGradients"]),
+      fonts: selectedPageStyles.reduce((prevFonts, currStyle) => [...prevFonts, ...currStyle.fonts], [] as StylePayload["fonts"]),
+     }
+    //  remove duplicate entry in atttribues by combining the entry and adding usedBy
+    const uniqueStyle: StylePayload = {
+      fillPaints: combineAndAddUsedBy(combinedStyle.fillPaints) as StylePayload["fillPaints"],
+      strokePaints: combineAndAddUsedBy(combinedStyle.strokePaints) as StylePayload["strokePaints"],
+      linearGradients: combineAndAddUsedBy(combinedStyle.linearGradients) as StylePayload["linearGradients"],
+      fonts: combineAndAddUsedBy(combinedStyle.fonts) as StylePayload["fonts"],
+    }
 
-  useEffect(() => {
-    console.log({ pagesInfoData })
-  }, [pagesInfoData])
+    return uniqueStyle;
+  }, [selectedPageIds, pagesInfoData])
+
 
   return (
     <StylesContext.Provider
@@ -92,6 +131,11 @@ export const StylesContextProvider: FC<PropsWithChildren> = ({ children }) => {
         postMessageToPlugin,
         fetchPageAction,
         setPageInfoData,
+        selectedPagesStyles,
+        selectedPageIds,
+        setSelectedPages,
+        selectedMenu,
+        setSelection: setSelectedMenu,
       }}
     >
       {children}

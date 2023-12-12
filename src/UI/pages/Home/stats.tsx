@@ -4,7 +4,7 @@ import PageStatsTable from "../../components/pageStatsTable";
 import { PageFetchActions, PageInfo } from "../../../@types";
 
 const Stats: React.FC = () => {
-    const {pagesInfoData, fetchPageAction} = useContext(StylesContext);
+    const {pagesInfoData, fetchPageAction, selectedPageIds, setSelectedPages} = useContext(StylesContext);
 
     const handlePageAction = (pageId: PageInfo["id"], action: PageFetchActions) => {
         fetchPageAction(pageId, action)
@@ -20,10 +20,7 @@ const Stats: React.FC = () => {
 
       {pagesInfoData?.length > 0 && (
         <div className="w-full p-6 flex flex-col gap-3">
-          <p className="text-black font-bold text-lg mb-4">
-            Page Related Info
-          </p>
-          <PageStatsTable pagesInfo={pagesInfoData} pageAction={handlePageAction} />
+          <PageStatsTable pagesInfo={pagesInfoData} pageAction={handlePageAction} onCheck={setSelectedPages} selectedPageIds={selectedPageIds} />
         </div>
       )}
     </div>

@@ -15,15 +15,34 @@ export const withTimeout = (onSuccess, onTimeout, timeout) => {
   };
 };
 
-
 export const measurePerformanceInMs = (callback: () => void): number => {
   const startTime = Date.now();
   callback();
   const endTime = Date.now();
 
   return endTime - startTime;
-}
+};
 
+export const combineAndAddUsedBy = (
+  entries: { name: string; usedBy: number }[],
+  log = false
+) => {
+  const combinedEntries: Record<string, { name: string; usedBy: number }> = {};
+
+  for (const entry of entries) {
+    if (!combinedEntries[entry.name]) {
+      combinedEntries[entry.name] = entry;
+    } else {
+      combinedEntries[entry.name] = {
+        ...combinedEntries[entry.name],
+        usedBy: combinedEntries[entry.name].usedBy + entry.usedBy,
+      };
+    }
+  }
+
+  if (log) console.log({ combinedEntries, entries });
+  return Object.values(combinedEntries);
+};
 
 interface KeyExtractor<T> {
   (item: T): any;
@@ -42,7 +61,10 @@ export function uniqBy<T>(array: T[], keyExtractor: KeyExtractor<T>): T[] {
   });
 }
 
-export function countBy<T>(collection: T[], keyExtractor: KeyExtractor<T>): Record<string, number> {
+export function countBy<T>(
+  collection: T[],
+  keyExtractor: KeyExtractor<T>
+): Record<string, number> {
   const counts: Record<string, number> = {};
 
   for (const item of collection) {

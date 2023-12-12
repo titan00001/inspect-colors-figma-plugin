@@ -84,11 +84,11 @@ const getCurrentPageStyles = () => {
   let fetchedTimeInMilliseconds = -1000;
 
   if (!currentPage.id) return;
+  
+  fetchedTimeInMilliseconds = measurePerformanceInMs(() => {
+    if (!pageData[currentPage.id]) {
+      // Extract and process paints and fonts for the current page
 
-  if (!pageData[currentPage.id]) {
-    // Extract and process paints and fonts for the current page
-
-    fetchedTimeInMilliseconds = measurePerformanceInMs(() => {
       const fillPaints = getFillPaintNodes(
         currentPageNodes,
         getSolidPaintColor
@@ -110,8 +110,8 @@ const getCurrentPageStyles = () => {
         linearGradients,
         fonts,
       };
-    });
-  }
+    }
+  });
 
   // Send the page data to the UI
   figma.ui.postMessage({
