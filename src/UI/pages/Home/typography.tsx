@@ -4,6 +4,7 @@ import StylesContext from "../../context/styles.context";
 import { TSelection } from "../../../@types";
 import { MENU_ITEMS } from "../../../constants";
 import MenuDropdown from "../../components/menu";
+import OrphanFontsList from "../../components/orphanFontTable";
 
 const TypographyTab: React.FC = () => {
     const {currentPageStyles, selectedPagesStyles, selectedMenu, setSelection} = useContext(StylesContext);
@@ -26,6 +27,15 @@ const TypographyTab: React.FC = () => {
             Typography
           </p>
           <FontsList fonts={pageStyles.fonts} />
+        </div>
+      )}
+
+      {pageStyles?.orphan?.fonts?.fontFamily?.length > 0 && (
+        <div className="w-full p-6 flex flex-col gap-3">
+          <p className="text-black font-bold text-lg mb-4">
+            Found Typography without predefined style
+          </p>
+          <OrphanFontsList fonts={pageStyles.orphan.fonts.fontFamily} />
         </div>
       )}
     </div>

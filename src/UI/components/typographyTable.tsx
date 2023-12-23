@@ -21,9 +21,9 @@ const FontComponent = ({ fontContent }: { fontContent: FontContent }) => {
     if (lineHeight.unit === "AUTO") {
         lineHeightValue = "AUTO";
     } else if(lineHeight.unit === "PIXELS") {
-        lineHeightValue = `${lineHeight.value}px`;
+        lineHeightValue = `${Math.round(lineHeight.value)}px`;
     } else if(lineHeight.unit === "PERCENT") {
-        lineHeightValue = `${lineHeight.value}%`;
+        lineHeightValue = `${Math.round(lineHeight.value)}%`;
     }
   
     return (

@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { PageClickActions, PageFetchActions, PageInfo, PageStyle, StylePayload, TSelection } from "../../@types";
+import { OrphanFontPayload, PageClickActions, PageFetchActions, PageInfo, PageStyle, StylePayload, TSelection } from "../../@types";
 import { combineAndAddUsedBy } from "../../utils/utils";
 
 export interface StylesContextProps {
@@ -102,10 +102,18 @@ export const StylesContextProvider: FC<PropsWithChildren> = ({ children }) => {
      const selectedPageStyles = selectedPageIds.map(pageId => pageStyles[pageId]);
     //  concat
      const combinedStyle: StylePayload = {
-      fillPaints: selectedPageStyles.reduce((prevFillPaints, currStyle) => [...prevFillPaints, ...currStyle.fillPaints], [] as StylePayload["fillPaints"]),
-      strokePaints: selectedPageStyles.reduce((prevStrokePaints, currStyle) => [...prevStrokePaints, ...currStyle.strokePaints], [] as StylePayload["strokePaints"]),
-      linearGradients: selectedPageStyles.reduce((prevLinearGradients, currStyle) => [...prevLinearGradients, ...currStyle.linearGradients], [] as StylePayload["linearGradients"]),
-      fonts: selectedPageStyles.reduce((prevFonts, currStyle) => [...prevFonts, ...currStyle.fonts], [] as StylePayload["fonts"]),
+      fillPaints: selectedPageStyles.reduce((prevFillPaints, currStyle) => [...prevFillPaints, ...currStyle?.fillPaints], [] as StylePayload["fillPaints"]),
+      strokePaints: selectedPageStyles.reduce((prevStrokePaints, currStyle) => [...prevStrokePaints, ...currStyle?.strokePaints], [] as StylePayload["strokePaints"]),
+      linearGradients: selectedPageStyles.reduce((prevLinearGradients, currStyle) => [...prevLinearGradients, ...currStyle?.linearGradients], [] as StylePayload["linearGradients"]),
+      fonts: selectedPageStyles.reduce((prevFonts, currStyle) => [...prevFonts, ...currStyle?.fonts], [] as StylePayload["fonts"]),
+      orphan: {
+        fillPaints: selectedPageStyles.reduce((prevFillPaints, currStyle) => [...prevFillPaints, ...(currStyle?.orphan?.fillPaints)], [] as StylePayload["fillPaints"]),
+        strokePaints: selectedPageStyles.reduce((prevStrokePaints, currStyle) => [...prevStrokePaints, ...currStyle?.orphan?.strokePaints], [] as StylePayload["strokePaints"]),
+        linearGradients: selectedPageStyles.reduce((prevLinearGradients, currStyle) => [...prevLinearGradients, ...currStyle?.orphan?.linearGradients], [] as StylePayload["linearGradients"]),
+        fonts: {
+          fontFamily: selectedPageStyles.reduce((prevOrphanFontFamily, currStyle) => [...prevOrphanFontFamily, ...currStyle?.orphan?.fonts?.fontFamily], [] as OrphanFontPayload[]),
+        }
+      }
      }
     //  remove duplicate entry in atttribues by combining the entry and adding usedBy
     const uniqueStyle: StylePayload = {
@@ -113,8 +121,15 @@ export const StylesContextProvider: FC<PropsWithChildren> = ({ children }) => {
       strokePaints: combineAndAddUsedBy(combinedStyle.strokePaints) as StylePayload["strokePaints"],
       linearGradients: combineAndAddUsedBy(combinedStyle.linearGradients) as StylePayload["linearGradients"],
       fonts: combineAndAddUsedBy(combinedStyle.fonts) as StylePayload["fonts"],
+      orphan: {
+        fillPaints: combineAndAddUsedBy(combinedStyle.orphan.fillPaints) as StylePayload["fillPaints"],
+        strokePaints: combineAndAddUsedBy(combinedStyle.orphan.strokePaints) as StylePayload["strokePaints"],
+        linearGradients: combineAndAddUsedBy(combinedStyle.orphan.linearGradients) as StylePayload["linearGradients"],
+        fonts: {
+          fontFamily: combineAndAddUsedBy(combinedStyle.orphan.fonts.fontFamily) as OrphanFontPayload[],
+        }
+      }
     }
-
     return uniqueStyle;
   }, [selectedPageIds, pagesInfoData])
 

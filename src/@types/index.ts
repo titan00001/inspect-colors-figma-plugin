@@ -44,12 +44,26 @@ export type Color = {
 
 export type TColorExtractor = (style: BaseStyle | null) => Color | null;
 
+export type OrphanFontPayload = {
+  name: string;
+  value: string;
+  usedBy: number;
+}
+
 export type StylePayload = {
   fillPaints: ColorContent[];
   strokePaints: ColorContent[];
   linearGradients: ColorContent[];
   fonts: FontContent[];
   fetchedTimeInSeconds?: number;
+  orphan: {
+    fillPaints: ColorContent[];
+    strokePaints: ColorContent[];
+    linearGradients: ColorContent[];
+    fonts: {
+      fontFamily: OrphanFontPayload[];
+    };
+  }
 }
 
 // UI specific:

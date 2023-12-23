@@ -26,7 +26,7 @@ const ColorTab: React.FC = () => {
           <p className="text-black font-bold text-lg mb-4">
             Fill Colors
           </p>
-          <ColorTable colors={pageStyles.fillPaints} />
+          <ColorTable colors={[...pageStyles.fillPaints, ...pageStyles.orphan.fillPaints]} />
         </div>
       )}
 
@@ -35,7 +35,7 @@ const ColorTab: React.FC = () => {
           <p className="text-black font-bold text-lg mb-4">
             Stroke Colors
           </p>
-          <ColorTable colors={pageStyles.strokePaints} />
+          <ColorTable colors={[...pageStyles.strokePaints, ...pageStyles.orphan.strokePaints]} />
         </div>
       )}
 
@@ -44,7 +44,7 @@ const ColorTab: React.FC = () => {
           <p className="text-black font-bold text-lg mb-4">
             Linear gradients
           </p>
-          <ColorTable colors={pageStyles.linearGradients} />
+          <ColorTable colors={[...pageStyles.linearGradients, ...pageStyles.orphan.linearGradients]} />
         </div>
       )}
     </div>
